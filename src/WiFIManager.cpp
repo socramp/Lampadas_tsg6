@@ -5,6 +5,11 @@
 #include <WiFi.h>
 
 
+bool wifiEstaConectado()
+{
+    return WiFi.status() == WL_CONNECTED;
+}
+
 void conectarWiFi()
 {
   Serial.println("=========================");
@@ -58,9 +63,4 @@ void garantirWiFiConectado()
   {
     Serial.println("Não foi possível reconectar ao WiFi.");
   }
-}
-
-bool wifiEstaConectado()
-{
-    return WiFi.status() == WL_CONNECTED;
 }

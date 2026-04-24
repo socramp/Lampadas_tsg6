@@ -1,5 +1,5 @@
-#ifndef SECRETS.H
-#define SECRETS.H
+#ifndef SECRETS_H
+#define SECRETS_H
 
 // Configurações do WiFi
 
