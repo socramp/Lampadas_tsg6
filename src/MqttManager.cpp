@@ -78,7 +78,7 @@ void callbackInternoMQTT(char* topico, byte* payload, unsigned int tamanho)
     }
 }
 
-void configuraMQTT()
+void configurarMQTT()
 {
     debugInfo("=======================");
     debugInfo(" Configurando MQTT...");
@@ -109,3 +109,157 @@ void configuraMQTT()
     debugInfo("Callback interno no MQTT configurado.");
 
 }
+
+void conectarMQTT()
+{
+    if(!wifiEstaConectado())
+    {
+        debugErro("MQTT não pode se conectar porque o WiFi está desconectado.");
+        return;
+    }
+
+    debugInfo("==========================");
+    debugInfo(" Iniciando conexão MQTT...");
+    debugInfo("==========================");
+    
+    int tentativasMQTT = 0;
+    const int maxTentativasMQTT = 5;
+
+    while(!mqttClient.connected() && tentativasMQTT < maxTentativasMQTT)
+    {
+        debugInfo("Tentando conectar ao broker MQTT. Tentativa: " + String(tentativasMQTT));
+
+        bool conectado = false;
+
+        if(USAR_AWS_IOT)
+        {
+            //TODO: implementar conexao AWS
+        }
+
+        else
+        {
+            if(strlen(MQTT_USUARIO) > 0)
+            {
+                debugInfo("Conectando MQTT com usuário e senha.");
+
+                conectado = mqttClient.connect(
+                    MQTT_CLIENT_ID, 
+                    MQTT_USUARIO, 
+                    MQTT_SENHA);
+            }
+
+            else //conexão em modo anônimo
+            {
+                debugInfo("Conectando MQTT sem usuário e senha.");
+                conectado = mqttClient.connect(MQTT_CLIENT_ID);
+            }
+        }
+
+        if(conectado)
+        {
+            debugInfo("MQTT conectado com sucesso.");
+
+            int totalTopicos = obterTotalTopicosRecebimento();
+
+            debugInfo("Total de tópicos para inscrição são: " + String(totalTopicos));
+
+            for(int i = 0; i < totalTopicos; i++)
+            {
+                const char* topico = obterTopicoRecebimento(i);
+
+                bool inscrito = mqttClient.subscribe(topico);
+
+                if(inscrito)
+                {
+                    debugInfo("Inscrito no tópico: " + String(topico));
+                }
+
+                else
+                {
+                    debugErro("Falha ao se inscrever no tópico: " + String(topico));
+                }
+            }
+
+            publicarMensagemNoTopico(0, "ESP32 conectado ao MQTT!!.");
+        }
+
+        else
+        {
+            debugErro("Falha ao conectar no MQTT. Código de erro: " + String(mqttClient.state()));
+            tentativasMQTT++;
+            delay(2000);
+        }
+    }//FIM DO WHILE
+    if(!mqttClient.connected())
+    {
+        debugErro("Não foi possível conectar ao broker MQTT após " + String(maxTentativasMQTT) + " tentativas");
+    }
+}
+
+int obterTotalTopicosRecebimento()
+{
+    return TOTAL_TOPICOS_RECEBER;
+}
+
+
+void garantirMQTTConectado()
+{
+    if(!wifiEstaConectado())
+    {
+        debugErro("MQTT não reconectado porque o WiFi está desconectado.");
+        return;
+    }
+
+    if(!mqttClient.connected())
+    {
+        debugErro("MQTT desconectado. Tentando reconectar...");
+        conectarMQTT();
+    }
+}
+
+void loopMQTT()
+{
+    mqttClient.loop();
+}
+
+void publicarMensagem(const char* topico, const char* mensagem)
+{
+    if(!mqttClient.connected())
+    {
+        debugErro("Não foi possível publicar. MQTT desconectado.");
+        return;
+    }
+
+    bool publicado = mqttClient.publish(topico, mensagem);
+
+    if(publicado)
+    {
+        debugInfo("Mensagem publicada via MQTT.");
+        debugInfo("Topico: " + String(topico));
+        debugInfo("Mensagem: " + String(mensagem));
+    }
+
+    else
+    {
+        debugErro("Falha ao publicar mensagem no tópico: " + String(topico));
+    }
+}
+
+void publicarMensagemNoTopico(int indiceTopico, const char* mensagem)
+{
+    const char* topico = obterTopicoPublicacao(indiceTopico);
+
+    if(strlen(topico) == 0)
+    {
+        debugErro("Não foi possível publicar. Indice de tópico inválido: " + String(indiceTopico));
+        return;
+    }
+
+    publicarMensagem(topico, mensagem);
+}
+
+bool mqttEstaConectado()
+{
+    return mqttClient.connected();
+}
+
