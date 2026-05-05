@@ -9,6 +9,7 @@
 
 //*=====CONSTANTES=====
 const int PinoLedRGB = 48;
+const int PinoLedLampada = 45;
 const int QntLeds = 1;
 const char TOPICO_COMANDO[] = "senai134/matheus/esp32/comando";
 
@@ -25,6 +26,7 @@ void tratarJsonComando(const String& mensagem);
 
 void setup() 
 {
+  pinMode(PinoLedLampada, OUTPUT);
   configurarDebug();
   conectarWiFi();
   configurarMQTT();
@@ -101,6 +103,19 @@ void tratarJsonComando(const String& mensagem)
       debugErro(erro.c_str());
       return;
     }
+    
+    
+    if(!doc["lampada"].is<bool>())
+    {
+      debugInfo("Não encontrado o comando para Lâmpada");
+    }
+
+    else 
+    {
+      bool estadoLampada = doc["lampada"].as<bool>();
+      digitalWrite(PinoLedLampada, estadoLampada);
+    }
+
 
     if(!doc["led"].is<JsonObject>())
     {
