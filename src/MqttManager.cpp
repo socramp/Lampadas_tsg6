@@ -86,7 +86,17 @@ void configurarMQTT()
 
     if(USAR_AWS_IOT)
     {
-    //TODO: implementar codigo para usar broker IOT Core da AWS
+        debugInfo("Modo selecionado: AWS Iot Core");
+
+        wifiClientSecure.setCACert(AWS_CERT_CA);
+        wifiClientSecure.setCertificate(AWS_CERT_CRT);
+        wifiClientSecure.setPrivateKey(AWS_CERT_PRIVATE);
+
+        mqttClient.setClient(wifiClientSecure);
+        mqttClient.setServer(AWS_IOT_ENDPOINT, AWS_IOT_PORT);
+
+        debugInfo("Endpoint AWS IoT: " + String(AWS_IOT_ENDPOINT));
+        debugInfo("Porta AWS IoT: " + String(AWS_IOT_PORT));
     }
 
     else if (MQTT_TLS)
@@ -150,7 +160,7 @@ void conectarMQTT()
 
         if(USAR_AWS_IOT)
         {
-            //TODO: implementar conexao AWS
+            conectado = mqttClient.connect(AWS_IOT_CLIENT_ID);
         }
 
         else
