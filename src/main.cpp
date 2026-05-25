@@ -7,7 +7,7 @@
 #include "MqttManager.h"
 #include "DebugManager.h"
 
-//*=====CONSTANTES=====
+//*=====CONSTANTES====
 const int PinoLedRGB = 48;
 const int PinoLedLampada = 45;
 const int QntLeds = 1;
