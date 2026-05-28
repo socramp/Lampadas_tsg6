@@ -1,143 +1,136 @@
 #include <Arduino.h>
-#include <WiFi.h>
 #include <ArduinoJson.h>
 #include <Adafruit_NeoPixel.h>
-#include <WiFiClientSecure.h>
+#include <Bounce2.h>
+
 #include "WiFiManager.h"
 #include "MqttManager.h"
 #include "DebugManager.h"
+#include "LED.h"
 
 //*=====CONSTANTES====
-const int PinoLedRGB = 48;
-const int PinoLedLampada = 45;
-const int QntLeds = 1;
-const char TOPICO_COMANDO[] = "senai134/matheus/esp32/comando";
+const char TOPICO_COMANDO[] = "senai134/sala09/grupo6/teste";
+
+//*=====VARIÁVEIS====
+bool estadoLampada1;
+bool estadoLampada2;
 
 //*=====INSTÂNCIAS=====
-Adafruit_NeoPixel ledRGB(QntLeds, PinoLedRGB, NEO_GRB + NEO_KHZ800);
-
+Bounce botaoBoot = Bounce();
+Bounce botaoInterruptor1 = Bounce();
+Bounce botaoInterruptor2 = Bounce();
+Led lampada1(45);
+Led lampada2(40);
 
 //*=====PROTÓTIPOS DE FUNÇÕES=====
-void tratarMensagemRecebida(const char* topico, const String& mensagem);
-void configurarLedRGB();
-void alterarCorLedRGB(int vermelho, int verde, int azul);
-void tratarJsonComando(const String& mensagem);
+void tratarMensagemRecebida(const char *topico, const String &mensagem);
+void tratarJsonComando(const String &mensagem);
+void tratarLampadaBotao();
+void publicarMensagemMQTT();
 
-
-void setup() 
+void setup()
 {
-  pinMode(PinoLedLampada, OUTPUT);
+  botaoBoot.attach(0, INPUT_PULLUP);
+  botaoInterruptor1.attach(10, INPUT_PULLUP);
+  botaoInterruptor2.attach(5, INPUT_PULLUP);
   configurarDebug();
   conectarWiFi();
   configurarMQTT();
   registrarCallbackMensagem(tratarMensagemRecebida);
   conectarMQTT();
-  configurarLedRGB();
 }
 
 void loop()
 {
+  publicarMensagemMQTT();
   garantirWiFiConectado();
   garantirMQTTConectado();
   loopMQTT();
+
+  botaoBoot.update();
+  botaoInterruptor1.update();
+  botaoInterruptor2.update();
+
+  tratarLampadaBotao();
+
+  lampada1.setEstado(estadoLampada1);
+  lampada1.update();
+  lampada2.setEstado(estadoLampada2);
+  lampada2.update();
 }
 
-void tratarMensagemRecebida(const char* topico, const String& mensagem)
+void tratarMensagemRecebida(const char *topico, const String &mensagem)
 {
-    debugInfo("==============================");
-    debugInfo("Mensagem recebida na aplicação");
-    debugInfo("==============================");
+  debugInfo("==============================");
+  debugInfo("Mensagem recebida na aplicação");
+  debugInfo("==============================");
 
-    if(topico == nullptr)
-    {
-      debugErro("Tópico MQTT inválido.");
-      return;
-    }
+  if (topico == nullptr)
+  {
+    debugErro("Tópico MQTT inválido.");
+    return;
+  }
 
-    debugInfo("Tópico: " + String(topico));
-    debugInfo("Mensagem: " + mensagem);
+  debugInfo("Tópico: " + String(topico));
+  debugInfo("Mensagem: " + mensagem);
 
-    if(strcmp(topico, TOPICO_COMANDO) == 0)
-    {
-      tratarJsonComando(mensagem);
-      return;
-    }
+  if (strcmp(topico, TOPICO_COMANDO) == 0)
+  {
+    tratarJsonComando(mensagem);
+    return;
+  }
 
-      debugErro("Tópico não tratado: " + String(topico));
+  debugErro("Tópico não tratado: " + String(topico));
 }
 
-void configurarLedRGB()
+void tratarJsonComando(const String &mensagem)
 {
-  ledRGB.begin();
-  ledRGB.setBrightness(100);
-  ledRGB.clear();
-  ledRGB.show();
+  JsonDocument doc;
 
-  debugInfo("LED RGB configurado no pino " + String(PinoLedRGB));
+  DeserializationError erro = deserializeJson(doc, mensagem);
+
+  if (doc["lampada1"].is<bool>())
+  {
+    estadoLampada1 = doc["lampada1"].as<bool>();
+  }
+
+  if (doc["lampada2"].is<bool>())
+  {
+    estadoLampada2 = doc["lampada2"].as<bool>();
+  }
 }
 
-void alterarCorLedRGB(int vermelho, int verde, int azul)
+void tratarLampadaBotao()
 {
-    vermelho = constrain(vermelho, 0, 255);
-    verde = constrain(verde, 0, 255);
-    azul = constrain(azul, 0, 255);
+  if (botaoBoot.fell())
+  {
+    debugInfo("Botao pressionado");
+    estadoLampada1 = !estadoLampada1;
+  }
 
-    ledRGB.setPixelColor(0, ledRGB.Color(vermelho, verde, azul));
-    ledRGB.show();
+  if (botaoInterruptor1.fell())
+  {
+    debugInfo("Botao 1 pressionado. Estado da lâmpada1: " + String(estadoLampada1));
+    estadoLampada1 = !estadoLampada1;
+  }
 
-    debugInfo("Cor aplicada no LED RGB");
-    debugInfo("R: " + String(vermelho));
-    debugInfo("G: " + String(verde));
-    debugInfo("B: " + String(azul));
+  if (botaoInterruptor2.fell())
+  {
+    debugInfo("Botao 2 pressionado. Estado da lâmpada2: " + String(estadoLampada2));
+    estadoLampada2 = !estadoLampada2;
+  }
 }
 
-void tratarJsonComando(const String& mensagem)
+void publicarMensagemMQTT()
 {
-    JsonDocument doc;
-
-    DeserializationError erro = deserializeJson(doc, mensagem);
-
-    if(erro)
-    {
-      debugErro("Erro ao interpretar JSON");
-      debugErro(erro.c_str());
-      return;
-    }
+  if(botaoInterruptor1.fell() || botaoInterruptor2.fell())
+  {
     
-    
-    if(!doc["lampada"].is<bool>())
-    {
-      debugInfo("Não encontrado o comando para Lâmpada");
-    }
+    String mensagem = "MQTT recebido\n"
+                      "Estado das lâmpadas:\n"
+                      "Lâmpada 1: " + String(estadoLampada1) + "\n"
+                      "Lâmpada 2: " + String(estadoLampada2);
 
-    else 
-    {
-      bool estadoLampada = doc["lampada"].as<bool>();
-      digitalWrite(PinoLedLampada, estadoLampada);
-    }
-
-
-    if(!doc["led"].is<JsonObject>())
-    {
-      debugInfo("Não encontrado o comando para o LED RGB");
-    }
-
-    else
-    {
-      if(!doc["led"] ["r"].is<int>() ||
-         !doc["led"] ["g"].is<int>() ||
-         !doc["led"] ["b"].is<int>() )
-         {
-            debugErro("JSON inválido. Use led.r, led.g e led.b");
-         }
-
-      else
-      {
-        int vermelho = doc["led"] ["r"].as<int>();
-        int verde = doc["led"] ["g"].as<int>();
-        int azul = doc["led"] ["b"].as<int>();
-
-        alterarCorLedRGB(vermelho, verde, azul);
-      }
-    }
+    publicarMensagemNoTopico(0, mensagem.c_str());
+  }
 }
