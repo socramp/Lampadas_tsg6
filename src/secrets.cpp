@@ -120,20 +120,16 @@ const char* AWS_IOT_CLIENT_ID = "DKzão6";
 
 
 const char* TOPICOS_PUBLICAR[] = {
-    "senai134/sala09/grupo6/publicar",
-    "senai134/esp32/log",
-    "senai134/esp32/resposta"
+    "senai134/sala09/grupo6/publicar"
 };
 
-const int TOTAL_TOPICOS_PUBLICAR = 3;
+const int TOTAL_TOPICOS_PUBLICAR = 1;
 
 const char* TOPICOS_RECEBER[] = {
-    "senai134/sala09/grupo6/teste",
-    "senai134/esp32/config",
-    "senai134/esp32/display"
+    "senai134/sala09/grupo6/teste"
 };
 
-const int TOTAL_TOPICOS_RECEBER = 3;
+const int TOTAL_TOPICOS_RECEBER = 1;
 
 
 //==============================

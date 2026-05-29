@@ -12,27 +12,52 @@
 const char TOPICO_COMANDO[] = "senai134/sala09/grupo6/teste";
 
 //*=====VARIÁVEIS====
+bool mensagemRecebidaMQTT = false;
 bool estadoLampada1;
 bool estadoLampada2;
+bool estadoLampada3;
+bool estadoLampada4;
+bool cliqueBotao1;
+bool cliqueBotao2;
+bool cliqueBotao3;
+bool cliqueBotao4;
+
+//!----PIN LÂMPADAS----
+int pinLampada1 = 45;
+int pinLampada2 = 40;
+int pinLampada3 = 0;
+int pinLampada4 = 0;
+
+//!----PIN BOTÕES----
+int pinLBotao1 = 10;
+int pinLBotao2 = 5;
+int pinLBotao3 = 0;
+int pinLBotao4 = 0;
 
 //*=====INSTÂNCIAS=====
 Bounce botaoBoot = Bounce();
 Bounce botaoInterruptor1 = Bounce();
 Bounce botaoInterruptor2 = Bounce();
-Led lampada1(45);
-Led lampada2(40);
+Bounce botaoInterruptor3 = Bounce();
+Bounce botaoInterruptor4 = Bounce();
+Led lampada1(pinLampada1);
+Led lampada2(pinLampada2);
+Led lampada3(pinLampada3);
+Led lampada4(pinLampada4);
 
 //*=====PROTÓTIPOS DE FUNÇÕES=====
 void tratarMensagemRecebida(const char *topico, const String &mensagem);
 void tratarJsonComando(const String &mensagem);
 void tratarLampadaBotao();
-void publicarMensagemMQTT();
+void publicarRespostaMQTT();
 
 void setup()
 {
   botaoBoot.attach(0, INPUT_PULLUP);
-  botaoInterruptor1.attach(10, INPUT_PULLUP);
-  botaoInterruptor2.attach(5, INPUT_PULLUP);
+  botaoInterruptor1.attach(pinLBotao1, INPUT_PULLUP);
+  botaoInterruptor2.attach(pinLBotao2, INPUT_PULLUP);
+  botaoInterruptor3.attach(pinLBotao3, INPUT_PULLUP);
+  botaoInterruptor4.attach(pinLBotao4, INPUT_PULLUP);
   configurarDebug();
   conectarWiFi();
   configurarMQTT();
@@ -42,21 +67,32 @@ void setup()
 
 void loop()
 {
-  publicarMensagemMQTT();
   garantirWiFiConectado();
   garantirMQTTConectado();
   loopMQTT();
-
+  
+  cliqueBotao1 = botaoInterruptor1.fell();
+  cliqueBotao2 = botaoInterruptor2.fell();
+  cliqueBotao3 = botaoInterruptor3.fell();
+  cliqueBotao4 = botaoInterruptor4.fell();
+  
+  tratarLampadaBotao();
+  publicarRespostaMQTT();
+  
   botaoBoot.update();
   botaoInterruptor1.update();
   botaoInterruptor2.update();
-
-  tratarLampadaBotao();
+  botaoInterruptor3.update();
+  botaoInterruptor4.update();
 
   lampada1.setEstado(estadoLampada1);
   lampada1.update();
   lampada2.setEstado(estadoLampada2);
   lampada2.update();
+  lampada3.setEstado(estadoLampada3);
+  lampada3.update();
+  lampada4.setEstado(estadoLampada4);
+  lampada4.update();
 }
 
 void tratarMensagemRecebida(const char *topico, const String &mensagem)
@@ -89,15 +125,44 @@ void tratarJsonComando(const String &mensagem)
 
   DeserializationError erro = deserializeJson(doc, mensagem);
 
-  if (doc["lampada1"].is<bool>())
+  if (erro)
   {
-    estadoLampada1 = doc["lampada1"].as<bool>();
+    debugErro("Erro ao interpretar JSON");
+    debugErro(erro.c_str());
+    return;
   }
 
-  if (doc["lampada2"].is<bool>())
+  if (!doc["lampada1"].is<bool>() ||
+      !doc["lampada2"].is<bool>() ||
+      !doc["lampada3"].is<bool>() ||
+      !doc["lampada4"].is<bool>())
   {
-    estadoLampada2 = doc["lampada2"].as<bool>();
+    debugInfo("Não encontrado o comando para a lâmpada");
   }
+  else
+  {
+    if (doc["lampada1"].is<bool>())
+    {
+      estadoLampada1 = doc["lampada1"].as<bool>();
+    }
+
+    if (doc["lampada2"].is<bool>())
+    {
+      estadoLampada2 = doc["lampada2"].as<bool>();
+    }
+
+    if (doc["lampada3"].is<bool>())
+    {
+      estadoLampada3 = doc["lampada3"].as<bool>();
+    }
+
+    if (doc["lampada4"].is<bool>())
+    {
+      estadoLampada4 = doc["lampada4"].as<bool>();
+    }
+  }
+
+  mensagemRecebidaMQTT = true;
 }
 
 void tratarLampadaBotao()
@@ -108,29 +173,66 @@ void tratarLampadaBotao()
     estadoLampada1 = !estadoLampada1;
   }
 
-  if (botaoInterruptor1.fell())
+  if (cliqueBotao1)
   {
-    debugInfo("Botao 1 pressionado. Estado da lâmpada1: " + String(estadoLampada1));
     estadoLampada1 = !estadoLampada1;
+    debugInfo("Botao 1 pressionado. Estado da lâmpada 1: " + String(estadoLampada1));
   }
 
-  if (botaoInterruptor2.fell())
+  if (cliqueBotao2)
   {
-    debugInfo("Botao 2 pressionado. Estado da lâmpada2: " + String(estadoLampada2));
     estadoLampada2 = !estadoLampada2;
+    debugInfo("Botao 2 pressionado. Estado da lâmpada 2: " + String(estadoLampada2));
+  }
+
+  if (cliqueBotao3)
+  {
+    estadoLampada3 = !estadoLampada3;
+    debugInfo("Botao 3 pressionado. Estado da lâmpada 3: " + String(estadoLampada3));
+  }
+
+  if (cliqueBotao4)
+  {
+    estadoLampada4 = !estadoLampada4;
+    debugInfo("Botao 4 pressionado. Estado da lâmpada 4: " + String(estadoLampada4));
   }
 }
 
-void publicarMensagemMQTT()
+void publicarRespostaMQTT()
 {
-  if(botaoInterruptor1.fell() || botaoInterruptor2.fell())
+  if (cliqueBotao1 || cliqueBotao2 || cliqueBotao3 || cliqueBotao4)
   {
-    
-    String mensagem = "MQTT recebido\n"
+
+    String mensagem = "Comando local recebido\n"
                       "Estado das lâmpadas:\n"
-                      "Lâmpada 1: " + String(estadoLampada1) + "\n"
-                      "Lâmpada 2: " + String(estadoLampada2);
+                      "Lâmpada 1: " +
+                      String(estadoLampada1) + "\n"
+                                               "Lâmpada 2: " +
+                      String(estadoLampada2) + "\n"
+                                               "Lâmpada 3: " +
+                      String(estadoLampada3) + "\n"
+                                               "Lâmpada 4: " +
+                      String(estadoLampada4);
 
     publicarMensagemNoTopico(0, mensagem.c_str());
+  }
+
+  if (mensagemRecebidaMQTT)
+  {
+
+    String mensagem = "MQTT recebido\n"
+                      "Estado das lâmpadas:\n"
+                      "Lâmpada 1: " +
+                      String(estadoLampada1) + "\n"
+                                               "Lâmpada 2: " +
+                      String(estadoLampada2) + "\n"
+                                               "Lâmpada 3: " +
+                      String(estadoLampada3) + "\n"
+                                               "Lâmpada 4: " +
+                      String(estadoLampada4);
+
+    publicarMensagemNoTopico(0, mensagem.c_str());
+
+    mensagemRecebidaMQTT = false;
   }
 }
