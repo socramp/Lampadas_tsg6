@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include <Adafruit_NeoPixel.h>
 #include <Bounce2.h>
+#include <Preferences.h>
 
 #include "WiFiManager.h"
 #include "MqttManager.h"
@@ -23,18 +24,19 @@ bool cliqueBotao3;
 bool cliqueBotao4;
 
 //!----PIN LÂMPADAS----
-int pinLampada1 = 45;
-int pinLampada2 = 40;
-int pinLampada3 = 0;
-int pinLampada4 = 0;
+int pinLampada1 = 38;
+int pinLampada2 = 37;
+int pinLampada3 = 36;
+int pinLampada4 = 35;
 
 //!----PIN BOTÕES----
-int pinLBotao1 = 10;
-int pinLBotao2 = 5;
-int pinLBotao3 = 0;
-int pinLBotao4 = 0;
+int pinLBotao1 = 18;
+int pinLBotao2 = 17;
+int pinLBotao3 = 16;
+int pinLBotao4 = 15;
 
 //*=====INSTÂNCIAS=====
+Preferences memoria;
 Bounce botaoBoot = Bounce();
 Bounce botaoInterruptor1 = Bounce();
 Bounce botaoInterruptor2 = Bounce();
@@ -50,6 +52,7 @@ void tratarMensagemRecebida(const char *topico, const String &mensagem);
 void tratarJsonComando(const String &mensagem);
 void tratarLampadaBotao();
 void publicarRespostaMQTT();
+void salvarEstadoLampadas();
 
 void setup()
 {
@@ -63,6 +66,12 @@ void setup()
   configurarMQTT();
   registrarCallbackMensagem(tratarMensagemRecebida);
   conectarMQTT();
+  memoria.begin("estadoLampadas", false);
+
+  estadoLampada1 = memoria.getBool("lamp1", false);
+  estadoLampada2 = memoria.getBool("lamp2", false);
+  estadoLampada3 = memoria.getBool("lamp3", false);
+  estadoLampada4 = memoria.getBool("lamp4", false);
 }
 
 void loop()
@@ -71,19 +80,20 @@ void loop()
   garantirMQTTConectado();
   loopMQTT();
   
+  botaoBoot.update();
+  botaoInterruptor1.update();
+  botaoInterruptor2.update();
+  botaoInterruptor3.update();
+  botaoInterruptor4.update();
+
   cliqueBotao1 = botaoInterruptor1.fell();
   cliqueBotao2 = botaoInterruptor2.fell();
   cliqueBotao3 = botaoInterruptor3.fell();
   cliqueBotao4 = botaoInterruptor4.fell();
   
   tratarLampadaBotao();
+  salvarEstadoLampadas();
   publicarRespostaMQTT();
-  
-  botaoBoot.update();
-  botaoInterruptor1.update();
-  botaoInterruptor2.update();
-  botaoInterruptor3.update();
-  botaoInterruptor4.update();
 
   lampada1.setEstado(estadoLampada1);
   lampada1.update();
@@ -131,6 +141,22 @@ void tratarJsonComando(const String &mensagem)
     debugErro(erro.c_str());
     return;
   }
+  
+  if (!doc["sala"].is<bool>())
+      {
+        debugInfo("Não encontrado comando para a sala");
+      }
+      else
+      {
+        if (doc["sala"].is<bool>())
+        {
+          estadoLampada1 = doc["sala"].as<bool>();
+          estadoLampada2 = doc["sala"].as<bool>();
+          estadoLampada3 = doc["sala"].as<bool>();
+          estadoLampada4 = doc["sala"].as<bool>();
+        }
+      }
+
 
   if (!doc["lampada1"].is<bool>() ||
       !doc["lampada2"].is<bool>() ||
@@ -234,5 +260,16 @@ void publicarRespostaMQTT()
     publicarMensagemNoTopico(0, mensagem.c_str());
 
     mensagemRecebidaMQTT = false;
+  }
+}
+
+void salvarEstadoLampadas()
+{
+  if (cliqueBotao1 || cliqueBotao2 || cliqueBotao3 || cliqueBotao4 || mensagemRecebidaMQTT)
+  {
+    memoria.putBool("lamp1", estadoLampada1);
+    memoria.putBool("lamp2", estadoLampada2);
+    memoria.putBool("lamp3", estadoLampada3);
+    memoria.putBool("lamp4", estadoLampada4);
   }
 }
