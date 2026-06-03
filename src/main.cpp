@@ -3,6 +3,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <Bounce2.h>
 #include <Preferences.h>
+#include <ArduinoOTA.h>
 
 #include "WiFiManager.h"
 #include "MqttManager.h"
@@ -10,7 +11,7 @@
 #include "LED.h"
 
 //*=====CONSTANTES====
-const char TOPICO_COMANDO[] = "senai134/sala09/grupo6/teste";
+const char TOPICO_COMANDO[] = "senai134/equipe/dk/devices/teste";
 
 //*=====VARIÁVEIS====
 bool mensagemRecebidaMQTT = false;

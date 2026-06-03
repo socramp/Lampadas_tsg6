@@ -207,7 +207,7 @@ void conectarMQTT()
                 }
             }
 
-            publicarMensagemNoTopico(0, "hwbjhvbdhvbfbvve");
+            publicarMensagemNoTopico(0, "Conectado com sucesso!");
         }
 
         else
@@ -227,7 +227,6 @@ int obterTotalTopicosRecebimento()
 {
     return TOTAL_TOPICOS_RECEBER;
 }
-
 
 void garantirMQTTConectado()
 {
