@@ -109,7 +109,7 @@ QI9ycrCqMpYEIDz9UHRPKUBkwS/jAI6rXpSDx2viyCgM7Xj/eJCQ0uE=
 
 const int AWS_IOT_PORT = 8883;
 
-const char* AWS_IOT_CLIENT_ID = "dk-esp32";
+const char* AWS_IOT_CLIENT_ID = "dk-esp32-caynam";
 
 
 //==============================
@@ -124,7 +124,8 @@ const char* TOPICOS_PUBLICAR[] = {
 const int TOTAL_TOPICOS_PUBLICAR = 1;
 
 const char* TOPICOS_RECEBER[] = {
-    "senai134/equipe/dk/devices/bagos"
+    "senai134/shared/projeto/lampadas"
+  //  "senai134/equipe/dk/devices/bagos"
 };
 
 const int TOTAL_TOPICOS_RECEBER = 1;
