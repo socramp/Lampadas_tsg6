@@ -65,22 +65,6 @@ void setup()
   configurarDebug();
   conectarWiFi();
 
-  debugInfo("IP: " + WiFi.localIP().toString());
-
-  ArduinoOTA.setHostname("lampadas-sala09");
-
-  ArduinoOTA.onStart([]()
-                     { debugInfo("Iniciando atualização OTA"); });
-  ArduinoOTA.onEnd([]()
-                   { debugInfo("Atualização OTA concluída"); });
-  ArduinoOTA.onError([](ota_error_t error)
-                     {
-    debugErro("Erro durante OTA");
-    debugErro("Código do erro: " + String(error)); });
-  ArduinoOTA.begin();
-
-  debugInfo("OTA iniciado");
-
   configurarMQTT();
   conectarMQTT();
   registrarCallbackMensagem(tratarMensagemRecebida);
@@ -97,7 +81,6 @@ void setup()
 
 void loop()
 {
-  ArduinoOTA.handle();
   garantirWiFiConectado();
   garantirMQTTConectado();
   loopMQTT();

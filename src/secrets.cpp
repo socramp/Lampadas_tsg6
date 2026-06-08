@@ -109,7 +109,7 @@ QI9ycrCqMpYEIDz9UHRPKUBkwS/jAI6rXpSDx2viyCgM7Xj/eJCQ0uE=
 
 const int AWS_IOT_PORT = 8883;
 
-const char* AWS_IOT_CLIENT_ID = "dk-esp32-caynam";
+const char* AWS_IOT_CLIENT_ID = "dk-esp32-marcos";
 
 
 //==============================
