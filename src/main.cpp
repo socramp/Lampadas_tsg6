@@ -11,7 +11,7 @@
 #include "LED.h"
 
 //*=====CONSTANTES====
-const char TOPICO_COMANDO[] = "senai134/equipe/dk/devices/teste";
+const char TOPICO_COMANDO[] = "senai134/shared/projeto/lampadas";
 
 //*=====VARIÁVEIS====
 bool mensagemRecebidaMQTT = false;
@@ -164,48 +164,30 @@ void tratarJsonComando(const String &mensagem)
     return;
   }
 
-  if (!doc["sala"].is<bool>())
+  if (!doc["lampada_1"].is<bool>() && !doc["lampada_2"].is<bool>() && !doc["lampada_3"].is<bool>() && !doc["lampada_4"].is<bool>())
   {
-    debugInfo("Não encontrado comando para a sala");
+    debugInfo("Não encontrado o comando para nenhuma lâmpada");
   }
   else
   {
-    if (doc["sala"].is<bool>())
+    if (doc["lampada_1"].is<bool>())
     {
-      estadoLampada1 = doc["sala"].as<bool>();
-      estadoLampada2 = doc["sala"].as<bool>();
-      estadoLampada3 = doc["sala"].as<bool>();
-      estadoLampada4 = doc["sala"].as<bool>();
-    }
-  }
-
-  if (!doc["lampada1"].is<bool>() ||
-      !doc["lampada2"].is<bool>() ||
-      !doc["lampada3"].is<bool>() ||
-      !doc["lampada4"].is<bool>())
-  {
-    debugInfo("Não encontrado o comando para a lâmpada");
-  }
-  else
-  {
-    if (doc["lampada1"].is<bool>())
-    {
-      estadoLampada1 = doc["lampada1"].as<bool>();
+      estadoLampada1 = doc["lampada_1"].as<bool>();
     }
 
-    if (doc["lampada2"].is<bool>())
+    if (doc["lampada_2"].is<bool>())
     {
-      estadoLampada2 = doc["lampada2"].as<bool>();
+      estadoLampada2 = doc["lampada_2"].as<bool>();
     }
 
-    if (doc["lampada3"].is<bool>())
+    if (doc["lampada_3"].is<bool>())
     {
-      estadoLampada3 = doc["lampada3"].as<bool>();
+      estadoLampada3 = doc["lampada_3"].as<bool>();
     }
 
-    if (doc["lampada4"].is<bool>())
+    if (doc["lampada_4"].is<bool>())
     {
-      estadoLampada4 = doc["lampada4"].as<bool>();
+      estadoLampada4 = doc["lampada_4"].as<bool>();
     }
   }
 
@@ -249,37 +231,40 @@ void publicarRespostaMQTT()
 {
   if (cliqueBotao1 || cliqueBotao2 || cliqueBotao3 || cliqueBotao4)
   {
+   
+    JsonDocument doc;
 
-    String mensagem = "Comando local recebido\n"
-                      "Estado das lâmpadas:\n"
-                      "Lâmpada 1: " +
-                      String(estadoLampada1) + "\n"
-                                               "Lâmpada 2: " +
-                      String(estadoLampada2) + "\n"
-                                               "Lâmpada 3: " +
-                      String(estadoLampada3) + "\n"
-                                               "Lâmpada 4: " +
-                      String(estadoLampada4);
+    doc["evento"] = "Comando local recebido";
+
+    JsonObject lampadas = doc["lampadas"].to<JsonObject>();
+    lampadas["lampada_1"] = estadoLampada1;
+    lampadas["lampada_2"] = estadoLampada2;
+    lampadas["lampada_3"] = estadoLampada3;
+    lampadas["lampada_4"] = estadoLampada4;
+
+    String mensagem;
+    serializeJson(doc, mensagem);
 
     publicarMensagemNoTopico(0, mensagem.c_str());
   }
 
   if (mensagemRecebidaMQTT)
   {
+    
+    JsonDocument doc;
 
-    String mensagem = "MQTT recebido\n"
-                      "Estado das lâmpadas:\n"
-                      "Lâmpada 1: " +
-                      String(estadoLampada1) + "\n"
-                                               "Lâmpada 2: " +
-                      String(estadoLampada2) + "\n"
-                                               "Lâmpada 3: " +
-                      String(estadoLampada3) + "\n"
-                                               "Lâmpada 4: " +
-                      String(estadoLampada4);
+    doc["evento"] = "MQTT recebido";
+
+    JsonObject lampadas = doc["lampadas"].to<JsonObject>();
+    lampadas["lampada_1"] = estadoLampada1;
+    lampadas["lampada_2"] = estadoLampada2;
+    lampadas["lampada_3"] = estadoLampada3;
+    lampadas["lampada_4"] = estadoLampada4;
+
+    String mensagem;
+    serializeJson(doc, mensagem);
 
     publicarMensagemNoTopico(0, mensagem.c_str());
-
     mensagemRecebidaMQTT = false;
   }
 }
