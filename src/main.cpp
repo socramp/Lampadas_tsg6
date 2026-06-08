@@ -9,6 +9,7 @@
 #include "MqttManager.h"
 #include "DebugManager.h"
 #include "LED.h"
+#include "Ota.h"
 
 //*=====CONSTANTES====
 const char TOPICO_COMANDO[] = "senai134/shared/projeto/lampadas";
@@ -65,6 +66,8 @@ void setup()
   configurarDebug();
   conectarWiFi();
 
+  setupOTA();
+
   configurarMQTT();
   conectarMQTT();
   registrarCallbackMensagem(tratarMensagemRecebida);
@@ -77,6 +80,8 @@ void setup()
 
   debugInfo("Hostname OTA: lampadas-sala09");
   debugInfo("IP OTA: " + WiFi.localIP().toString());
+
+  debugInfo("Vamooooooooooo, OTA funcionando!!!!!");
 }
 
 void loop()
@@ -84,6 +89,7 @@ void loop()
   garantirWiFiConectado();
   garantirMQTTConectado();
   loopMQTT();
+  loopOTA();
 
   botaoBoot.update();
   botaoInterruptor1.update();
@@ -229,6 +235,7 @@ void publicarRespostaMQTT()
     serializeJson(doc, mensagem);
 
     publicarMensagemNoTopico(0, mensagem.c_str());
+    publicarMensagemNoTopico(1, mensagem.c_str());
   }
 
   if (mensagemRecebidaMQTT)

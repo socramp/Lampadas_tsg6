@@ -207,7 +207,7 @@ void conectarMQTT()
                 }
             }
 
-            publicarMensagemNoTopico(0, "Conectado com sucesso!");
+            //publicarMensagemNoTopico(0, "Conectado com sucesso!");
         }
 
         else
