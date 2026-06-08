@@ -64,23 +64,44 @@ void setup()
   botaoInterruptor4.attach(pinLBotao4, INPUT_PULLUP);
   configurarDebug();
   conectarWiFi();
+
+  debugInfo("IP: " + WiFi.localIP().toString());
+
+  ArduinoOTA.setHostname("lampadas-sala09");
+
+  ArduinoOTA.onStart([]()
+                     { debugInfo("Iniciando atualização OTA"); });
+  ArduinoOTA.onEnd([]()
+                   { debugInfo("Atualização OTA concluída"); });
+  ArduinoOTA.onError([](ota_error_t error)
+                     {
+    debugErro("Erro durante OTA");
+    debugErro("Código do erro: " + String(error)); });
+  ArduinoOTA.begin();
+
+  debugInfo("OTA iniciado");
+
   configurarMQTT();
-  registrarCallbackMensagem(tratarMensagemRecebida);
   conectarMQTT();
+  registrarCallbackMensagem(tratarMensagemRecebida);
   memoria.begin("estadoLampadas", false);
 
   estadoLampada1 = memoria.getBool("lamp1", false);
   estadoLampada2 = memoria.getBool("lamp2", false);
   estadoLampada3 = memoria.getBool("lamp3", false);
   estadoLampada4 = memoria.getBool("lamp4", false);
+
+  debugInfo("Hostname OTA: lampadas-sala09");
+  debugInfo("IP OTA: " + WiFi.localIP().toString());
 }
 
 void loop()
 {
+  ArduinoOTA.handle();
   garantirWiFiConectado();
   garantirMQTTConectado();
   loopMQTT();
-  
+
   botaoBoot.update();
   botaoInterruptor1.update();
   botaoInterruptor2.update();
@@ -91,7 +112,7 @@ void loop()
   cliqueBotao2 = botaoInterruptor2.fell();
   cliqueBotao3 = botaoInterruptor3.fell();
   cliqueBotao4 = botaoInterruptor4.fell();
-  
+
   tratarLampadaBotao();
   salvarEstadoLampadas();
   publicarRespostaMQTT();
@@ -142,22 +163,21 @@ void tratarJsonComando(const String &mensagem)
     debugErro(erro.c_str());
     return;
   }
-  
-  if (!doc["sala"].is<bool>())
-      {
-        debugInfo("Não encontrado comando para a sala");
-      }
-      else
-      {
-        if (doc["sala"].is<bool>())
-        {
-          estadoLampada1 = doc["sala"].as<bool>();
-          estadoLampada2 = doc["sala"].as<bool>();
-          estadoLampada3 = doc["sala"].as<bool>();
-          estadoLampada4 = doc["sala"].as<bool>();
-        }
-      }
 
+  if (!doc["sala"].is<bool>())
+  {
+    debugInfo("Não encontrado comando para a sala");
+  }
+  else
+  {
+    if (doc["sala"].is<bool>())
+    {
+      estadoLampada1 = doc["sala"].as<bool>();
+      estadoLampada2 = doc["sala"].as<bool>();
+      estadoLampada3 = doc["sala"].as<bool>();
+      estadoLampada4 = doc["sala"].as<bool>();
+    }
+  }
 
   if (!doc["lampada1"].is<bool>() ||
       !doc["lampada2"].is<bool>() ||
