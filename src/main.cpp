@@ -3,13 +3,11 @@
 #include <Adafruit_NeoPixel.h>
 #include <Bounce2.h>
 #include <Preferences.h>
-#include <ArduinoOTA.h>
 
 #include "WiFiManager.h"
 #include "MqttManager.h"
 #include "DebugManager.h"
 #include "LED.h"
-#include "Ota.h"
 
 //*=====CONSTANTES====
 const char TOPICO_COMANDO[] = "senai134/shared/projeto/lampadas";
@@ -66,8 +64,6 @@ void setup()
   configurarDebug();
   conectarWiFi();
 
-  setupOTA();
-
   configurarMQTT();
   conectarMQTT();
   registrarCallbackMensagem(tratarMensagemRecebida);
@@ -77,19 +73,12 @@ void setup()
   estadoLampada2 = memoria.getBool("lamp2", false);
   estadoLampada3 = memoria.getBool("lamp3", false);
   estadoLampada4 = memoria.getBool("lamp4", false);
-
-  debugInfo("Hostname OTA: lampadas-sala09");
-  debugInfo("IP OTA: " + WiFi.localIP().toString());
-
-  debugInfo("Vamooooooooooo, OTA funcionando!!!!!");
 }
-
 void loop()
 {
   garantirWiFiConectado();
   garantirMQTTConectado();
   loopMQTT();
-  loopOTA();
 
   botaoBoot.update();
   botaoInterruptor1.update();
@@ -220,7 +209,7 @@ void publicarRespostaMQTT()
 {
   if (cliqueBotao1 || cliqueBotao2 || cliqueBotao3 || cliqueBotao4)
   {
-   
+
     JsonDocument doc;
 
     doc["evento"] = "Comando local recebido";
@@ -235,12 +224,11 @@ void publicarRespostaMQTT()
     serializeJson(doc, mensagem);
 
     publicarMensagemNoTopico(0, mensagem.c_str());
-    publicarMensagemNoTopico(1, mensagem.c_str());
   }
 
   if (mensagemRecebidaMQTT)
   {
-    
+
     JsonDocument doc;
 
     doc["evento"] = "MQTT recebido";
@@ -255,6 +243,7 @@ void publicarRespostaMQTT()
     serializeJson(doc, mensagem);
 
     publicarMensagemNoTopico(0, mensagem.c_str());
+    publicarMensagemNoTopico(1, mensagem.c_str());
     mensagemRecebidaMQTT = false;
   }
 }
