@@ -8,6 +8,7 @@
 #include "MqttManager.h"
 #include "DebugManager.h"
 #include "LED.h"
+#include "Ota.h"
 
 //*=====CONSTANTES====
 const char TOPICO_COMANDO[] = "senai134/shared/projeto/lampadas";
@@ -64,6 +65,8 @@ void setup()
   configurarDebug();
   conectarWiFi();
 
+  setupOTA();
+
   configurarMQTT();
   conectarMQTT();
   registrarCallbackMensagem(tratarMensagemRecebida);
@@ -73,12 +76,20 @@ void setup()
   estadoLampada2 = memoria.getBool("lamp2", false);
   estadoLampada3 = memoria.getBool("lamp3", false);
   estadoLampada4 = memoria.getBool("lamp4", false);
+
+  debugInfo("Hostname OTA: lampadas-sala09");
+  debugInfo("IP OTA: " + WiFi.localIP().toString());
+
+  Serial.println("Ota funcionandoooooooooo!!!!!!!!!!!!!!!!");
 }
+
 void loop()
 {
   garantirWiFiConectado();
   garantirMQTTConectado();
   loopMQTT();
+
+  loopOTA();
 
   botaoBoot.update();
   botaoInterruptor1.update();
@@ -151,25 +162,29 @@ void tratarJsonComando(const String &mensagem)
     if (doc["lampada_1"].is<bool>())
     {
       estadoLampada1 = doc["lampada_1"].as<bool>();
+      mensagemRecebidaMQTT = true;
     }
 
     if (doc["lampada_2"].is<bool>())
     {
       estadoLampada2 = doc["lampada_2"].as<bool>();
+      mensagemRecebidaMQTT = true;
     }
 
     if (doc["lampada_3"].is<bool>())
     {
       estadoLampada3 = doc["lampada_3"].as<bool>();
+      mensagemRecebidaMQTT = true;
     }
 
     if (doc["lampada_4"].is<bool>())
     {
       estadoLampada4 = doc["lampada_4"].as<bool>();
+      mensagemRecebidaMQTT = true;
     }
   }
 
-  mensagemRecebidaMQTT = true;
+  
 }
 
 void tratarLampadaBotao()
@@ -244,8 +259,8 @@ void publicarRespostaMQTT()
 
     publicarMensagemNoTopico(0, mensagem.c_str());
     publicarMensagemNoTopico(1, mensagem.c_str());
-    mensagemRecebidaMQTT = false;
   }
+   mensagemRecebidaMQTT = false;
 }
 
 void salvarEstadoLampadas()

@@ -119,7 +119,7 @@ const char* AWS_IOT_CLIENT_ID = "dk-esp32-marcos";
 
 const char* TOPICOS_PUBLICAR[] = {
     "senai134/equipe/dk/devices/teste",
-     "senai134/shared/projeto/lampadas"
+    "senai134/shared/projeto/lampadas"
 };
 
 const int TOTAL_TOPICOS_PUBLICAR = 2;
