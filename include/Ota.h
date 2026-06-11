@@ -146,10 +146,21 @@ void setupOTA()
       }
     } });
     server.onNotFound([]()
-                      {
-  Serial.println("Pagina nao encontrada:");
-  Serial.println(server.uri());
-  server.send(404, "text/plain", "404"); });
+{
+    Serial.println("==========");
+    Serial.print("IP: ");
+    Serial.println(server.client().remoteIP());
+
+    Serial.print("URI: ");
+    Serial.println(server.uri());
+
+    Serial.print("Metodo: ");
+    Serial.println(server.method() == HTTP_GET ? "GET" : "POST");
+
+    Serial.println("==========");
+
+    server.send(404, "text/plain", "404");
+});
 
     server.begin();
 }

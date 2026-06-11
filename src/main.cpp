@@ -80,7 +80,7 @@ void setup()
   debugInfo("Hostname OTA: lampadas-sala09");
   debugInfo("IP OTA: " + WiFi.localIP().toString());
 
-  Serial.println("Ota funcionandoooooooooo!!!!!!!!!!!!!!!!");
+  Serial.println("Ota funcionando, bolas");
 }
 
 void loop()
