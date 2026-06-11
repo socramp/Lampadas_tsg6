@@ -156,6 +156,16 @@ void tratarJsonComando(const String &mensagem)
   if (!doc["lampada_1"].is<bool>() && !doc["lampada_2"].is<bool>() && !doc["lampada_3"].is<bool>() && !doc["lampada_4"].is<bool>())
   {
     debugInfo("Não encontrado o comando para nenhuma lâmpada");
+
+    JsonDocument doc;
+    
+    doc["AVISO: "] = "Não encontrado o comando para nenhuma lâmpada";
+
+      String mensagem;
+      serializeJson(doc, mensagem);
+
+      publicarMensagemNoTopico(0, mensagem.c_str());
+      publicarMensagemNoTopico(1, mensagem.c_str());
   }
   else
   {
@@ -165,10 +175,34 @@ void tratarJsonComando(const String &mensagem)
       mensagemRecebidaMQTT = true;
     }
 
+    else
+    {
+      JsonDocument doc;
+      doc["AVISO: "] = "O comando enviado é inválido, utilize somente 'true' ou 'false'";
+
+      String mensagem;
+      serializeJson(doc, mensagem);
+
+      publicarMensagemNoTopico(0, mensagem.c_str());
+      publicarMensagemNoTopico(1, mensagem.c_str());
+    }
+
     if (doc["lampada_2"].is<bool>())
     {
       estadoLampada2 = doc["lampada_2"].as<bool>();
       mensagemRecebidaMQTT = true;
+    }
+
+    else
+    {
+      JsonDocument doc;
+      doc["AVISO: "] = "O comando enviado é inválido, utilize somente 'true' ou 'false'";
+
+      String mensagem;
+      serializeJson(doc, mensagem);
+
+      publicarMensagemNoTopico(0, mensagem.c_str());
+      publicarMensagemNoTopico(1, mensagem.c_str());
     }
 
     if (doc["lampada_3"].is<bool>())
@@ -176,15 +210,36 @@ void tratarJsonComando(const String &mensagem)
       estadoLampada3 = doc["lampada_3"].as<bool>();
       mensagemRecebidaMQTT = true;
     }
+    
+    else
+    {
+      JsonDocument doc;
+      doc["AVISO: "] = "O comando enviado é inválido, utilize somente 'true' ou 'false'";
+
+      String mensagem;
+      serializeJson(doc, mensagem);
+
+      publicarMensagemNoTopico(0, mensagem.c_str());
+      publicarMensagemNoTopico(1, mensagem.c_str());
+    }
 
     if (doc["lampada_4"].is<bool>())
     {
       estadoLampada4 = doc["lampada_4"].as<bool>();
       mensagemRecebidaMQTT = true;
     }
-  }
+    else
+    {
+      JsonDocument doc;
+      doc["AVISO: "] = "O comando enviado é inválido, utilize somente 'true' ou 'false'";
 
-  
+      String mensagem;
+      serializeJson(doc, mensagem);
+
+      publicarMensagemNoTopico(0, mensagem.c_str());
+      publicarMensagemNoTopico(1, mensagem.c_str());
+    }
+  }
 }
 
 void tratarLampadaBotao()
@@ -230,10 +285,10 @@ void publicarRespostaMQTT()
     doc["evento"] = "Comando local recebido";
 
     JsonObject lampadas = doc["lampadas"].to<JsonObject>();
-    lampadas["lampada_1"] = estadoLampada1;
-    lampadas["lampada_2"] = estadoLampada2;
-    lampadas["lampada_3"] = estadoLampada3;
-    lampadas["lampada_4"] = estadoLampada4;
+    lampadas["resposta_lampada_1"] = estadoLampada1;
+    lampadas["resposta_lampada_2"] = estadoLampada2;
+    lampadas["resposta_lampada_3"] = estadoLampada3;
+    lampadas["resposta_lampada_4"] = estadoLampada4;
 
     String mensagem;
     serializeJson(doc, mensagem);
@@ -249,10 +304,10 @@ void publicarRespostaMQTT()
     doc["evento"] = "MQTT recebido";
 
     JsonObject lampadas = doc["lampadas"].to<JsonObject>();
-    lampadas["lampada_1"] = estadoLampada1;
-    lampadas["lampada_2"] = estadoLampada2;
-    lampadas["lampada_3"] = estadoLampada3;
-    lampadas["lampada_4"] = estadoLampada4;
+    lampadas["resposta_lampada_1"] = estadoLampada1;
+    lampadas["resposta_lampada_2"] = estadoLampada2;
+    lampadas["resposta_lampada_3"] = estadoLampada3;
+    lampadas["resposta_lampada_4"] = estadoLampada4;
 
     String mensagem;
     serializeJson(doc, mensagem);
@@ -260,7 +315,7 @@ void publicarRespostaMQTT()
     publicarMensagemNoTopico(0, mensagem.c_str());
     publicarMensagemNoTopico(1, mensagem.c_str());
   }
-   mensagemRecebidaMQTT = false;
+  mensagemRecebidaMQTT = false;
 }
 
 void salvarEstadoLampadas()
@@ -273,3 +328,4 @@ void salvarEstadoLampadas()
     memoria.putBool("lamp4", estadoLampada4);
   }
 }
+
